@@ -15,7 +15,7 @@ def make_dict(url):
     temp = [{"level":i, "links":[]} for i in range(depth+1)]
     output = {"root":url, "web":temp}
     output[web][0][0]["links"] = [url]
-
+    return output
 
 def get_html(url):
     web_url = urllib.request.urlopen(url)
@@ -39,13 +39,15 @@ def scan_urls(html_code):
                 urls_lst.append(link)
     return urls_lst
 
+def get_all_urls(depth, url):
+    dictionary = make_dict(url)
+    for i in range(1, depth+2):
+        lst = []
+        for j in dictionary[web][i-1][1]["links"]:
+            lst += scan_urls(get_html(j))
+        dictionary[web][i][1]["links"] = lst
+    return dictionary
 
-def get_all_urls(depth, depth_curr, url):
-    dict = {}
-    dict[depth-depth_curr] = scan_urls(url)
-    new_lst = [] #not done!
-    for link in dict[depth]:
-        new_lst.append(get_all_urls(depth, depth_curr+1, link))
 
 
 
