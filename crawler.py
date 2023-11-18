@@ -1,11 +1,23 @@
 import argparse
 import urllib.request
 import yaml
+import re
 
-#parser = argparse.ArgumentParser()
-#parser.add_argument('--depth', type=int)
-#parser.add_argument('--ignore-regex', type=str)
-#parser.add_argument('url', type=str)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--depth', type=int, default=2)
+parser.add_argument('-ir', '--ignore_regex', type=str, default="^$") #compatible only with the string: "", there is no url like this!
+parser.add_argument('url', type=str)
+arguments = parser.parse_args()
+
+depth = arguments.depth
+regex = arguments.ignore_regex
+url = arguments.url
+
+
+"""
+make it look good
+"""
 
 
 
@@ -15,12 +27,9 @@ def make_dict(url, depth):
     output["web"][0]["links"] = [url]
     return output
 
-def get_html(url):
-    web_url = urllib.request.urlopen(url)
-    data = web_url.read()
-    return str(data)
 
-def scan_urls(html_code, src):
+
+def scan_urls_href(html_code, src):
     last_index = 0
     urls_lst = []
     while last_index < len(html_code):
@@ -48,15 +57,48 @@ def scan_urls(html_code, src):
     return urls_lst
 
 
+def scan_urls_src(html_code, src):
+    last_index = 0
+    url_lst = []
+    while last_index < len(html_code):
+        current_index = html_code.find('src="', last_index)
+        if current_index != -1:
+            j = current_index = 6
+            lst = []
+            while html_code[j] != '"':
+                lst.append(html_code[j])
+                j += 1
+            last_index = j + 1
+            if lst[0] == '/' and lst[1] != '/':
+                link = src + "".join(lst)
+            elif lst[0] == '/' and lst[1] == '/':
+                if 's' in src:
+                    link = 'https:' + "".join(lst)
+                else:
+                    link = 'http:' + "".join(lst)
+            else:
+                link = "".join(lst)
+            if link not in urls_lst:
+                urls_lst.append(link)
+        else:
+            last_index = len(html)
+    return urls_lst
 
-def get_all_urls(depth, url):
+
+
+
+def get_all_urls(regex, depth, url):
     dictionary = make_dict(url, depth)
     for i in range(1, depth+1):
         lst = []
         for j in dictionary["web"][i-1]["links"]:
             try:
-                urllib.request.urlopen(j)
-                lst += scan_urls(get_html(j), get_site_name(j))
+                if not re.search(regex, j):
+                    web_url = urllib.request.urlopen(j)
+                    data = str(web_url.read())
+                    src_site = get_site_name(j)
+                    lst += scan_urls_href(data, src_site)
+                    lst += scan_urls_src(data, src_site)
             except:
                 continue
         dictionary["web"][i]["links"] = lst
@@ -76,7 +118,7 @@ def get_site_name(url):
 
 
 #The input must be http / https site because of package limitations.
-print(get_all_urls(1, 'https://he.wikipedia.org/wiki/%D7%9E%D7%A1%D7%98%D7%99%D7%A7'))
+print(get_all_urls(regex, depth, url))
 
 
 
