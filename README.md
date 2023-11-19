@@ -1,5 +1,5 @@
 # crawler
-This is Raviv's and Noam's project
+This is *Raviv*'s and *Noam*'s project
 
 The crawler only works for HTTP / HTTPS sites because of package limitations
 
