@@ -19,7 +19,7 @@ regex = arguments.ignore_regex
 url = arguments.url
 
 
-def scan_urls_href(html_code, src):
+def scan_urls_href(html_code, src, regex):
     '''
     return a list of all the urls from a url (html_code)
     using attribute src
@@ -39,20 +39,20 @@ def scan_urls_href(html_code, src):
             if lst[0] == '/' and lst[1] != '/':
                 link = src + "".join(lst)
             elif lst[0] == '/' and lst[1] == '/':
-                if 's' in src:
+                if 's' == src[4]:
                     link = 'https:' + "".join(lst)
                 else:
                     link = 'http:' + ''.join(lst)
             else:
                 link = "".join(lst)
-            if link not in urls_lst:
+            if link not in urls_lst and (not re.search(regex, link)):
                 urls_lst.append(link)
         else:
             last_index = len(html_code)
     return urls_lst
 
 
-def scan_urls_src(html_code, src, new_lst):
+def scan_urls_src(html_code, src, new_lst, regex):
     '''
     return a list of all the urls from a url (html_code)
     using attribute src
@@ -72,13 +72,13 @@ def scan_urls_src(html_code, src, new_lst):
             if lst[0] == '/' and lst[1] != '/':
                 link = src + "".join(lst)
             elif lst[0] == '/' and lst[1] == '/':
-                if 's' in src:
+                if 's' == src[4]:
                     link = 'https:' + "".join(lst)
                 else:
                     link = 'http:' + "".join(lst)
             else:
                 link = "".join(lst)
-            if link not in urls_lst and link not in new_lst:
+            if link not in urls_lst and link not in new_lst and (not re.search(regex, link)):
                 urls_lst.append(link)
         else:
             last_index = len(html)
@@ -101,11 +101,10 @@ def get_all_urls(regex, depth, url):
         for j in dictionary["web"][i-1]["links"]:
             #try so we dont get a 404/403 error
             try:
-                if not re.search(regex, j):
-                    data = str(urllib.request.urlopen(j).read())
-                    src_site = get_site_name(j)
-                    lst += scan_urls_href(data, src_site)
-                    lst += scan_urls_src(data, src_site, lst)
+                data = str(urllib.request.urlopen(j).read())
+                src_site = get_site_name(j)
+                lst += scan_urls_href(data, src_site, regex)
+                lst += scan_urls_src(data, src_site, lst, regex)
             except:
                 continue
         dictionary["web"][i]["links"] = lst
