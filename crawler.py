@@ -7,10 +7,9 @@ import urllib.request
 import yaml
 import re
 
-#gets input from user
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--depth', type=int, default=2)
-parser.add_argument('-ir', '--ignore_regex', type=str, default="^$") #compatible only with the string: "", there is no url like this!
+parser.add_argument('-ir', '--ignore_regex', type=str, default="^$")
 parser.add_argument('url', type=str)
 arguments = parser.parse_args()
 
